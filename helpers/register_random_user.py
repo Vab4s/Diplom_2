@@ -11,18 +11,20 @@ def generate_random_string(length=9):
     random_string = ''.join(random.choice(letters) for i in range(length))
     return random_string
 
-
 @allure.step('Регистрация нового пользователя')
 def register_new_user_and_return_userdata_and_response(account=None, custom_email=None, custom_password=None, custom_name=None):
 
+    # Список, в который будут переданы сгенерированные данные пользователя
     user_data = []
 
-    # генерируем емаил, пароль и имя пользователя
+    # Генерируем емаил, пароль и имя пользователя
     email = f'{generate_random_string(10)}@{generate_random_string(5)}.{generate_random_string(3)}'
     password = generate_random_string(10)
     name = generate_random_string(10)
 
-    # собираем тело запроса
+    # Собираем тело запроса
+    # Либо из сгенерированных данных, которые могут быть при необходимости частично заменены при вызове функции
+    # Либо из данных другого аккаунта
     if account == None:
         payload = {
             "email": email if custom_email == None else custom_email,
@@ -36,14 +38,14 @@ def register_new_user_and_return_userdata_and_response(account=None, custom_emai
             "name": account[2]
         }
 
-    # отправляем запрос на регистрацию и сохраняем ответ в переменную response
+    # Отправляем запрос на регистрацию и сохраняем ответ в переменную response
     response = requests.post(POST_CREATE_USER, data=payload)
 
-    # если регистрация прошла успешно (код ответа 200), добавляем в список емаил и пароль пользователя
+    # Если регистрация прошла успешно (код ответа 200), добавляем в список емаил и пароль пользователя
     if response.status_code == 200:
         user_data.append(email)
         user_data.append(password)
         user_data.append(name)
 
-    # возвращаем регистрационные данные, тело ответа и код ответа
+    # Возвращаем регистрационные данные, тело ответа и код ответа
     return user_data, response.json(), response.status_code

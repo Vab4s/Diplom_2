@@ -1,6 +1,10 @@
 import allure
+
 from helpers.register_random_user import register_new_user_and_return_userdata_and_response
 from helpers.delete_user import delete_user
+
+from helpers.response_body_check import response_body_create_login_user_check
+from data.response_messages import ERROR_ALREADY_EXIST, ERROR_NO_REQUIRED_FIELDS
 
 
 @allure.story('Проверка создания пользователя')
@@ -9,12 +13,8 @@ class TestCreateUser:
     @allure.description('Заполнены все поля')
     def test_create_user_with_correct_data(self):
         user_data, response_text, response_code = register_new_user_and_return_userdata_and_response()
-        email, _, name = user_data
-        assert (response_text['success'] is True
-                and response_text['user']['email'] == user_data[0]
-                and response_text['user']['name'] == user_data[2]
-                and response_text['accessToken']
-                and response_text['refreshToken']
+
+        assert (response_body_create_login_user_check(response_text, user_data) is True
                 and response_code == 200)
 
         delete_user(user_data, response_text)
@@ -24,8 +24,8 @@ class TestCreateUser:
     def test_create_duplicate_user(self):
         user_data, response_text, _ = register_new_user_and_return_userdata_and_response()
         new_courier_data, new_response_text, new_response_code = register_new_user_and_return_userdata_and_response(user_data)
-        assert (new_response_text['success'] is False
-                and new_response_text['message'] == 'User already exists'
+
+        assert (response_body_create_login_user_check(new_response_text, message=ERROR_ALREADY_EXIST) is False
                 and new_response_code == 403)
 
         delete_user(user_data, response_text)
@@ -34,22 +34,22 @@ class TestCreateUser:
     @allure.description('Поле "login" не заполнено')
     def test__create_user_without_email(self):
         user_data, response_text, response_code = register_new_user_and_return_userdata_and_response(custom_email='')
-        assert (response_text['success'] is False
-                and response_text['message'] == 'Email, password and name are required fields'
+
+        assert (response_body_create_login_user_check(response_text, message=ERROR_NO_REQUIRED_FIELDS) is False
                 and response_code == 403)
 
     @allure.title('Создание пользователя без заполнения поля "password"')
     @allure.description('Поле "password" не заполнено')
     def test__create_user_without_password(self):
         user_data, response_text, response_code = register_new_user_and_return_userdata_and_response(custom_password='')
-        assert (response_text['success'] is False
-                and response_text['message'] == 'Email, password and name are required fields'
+
+        assert (response_body_create_login_user_check(response_text, message=ERROR_NO_REQUIRED_FIELDS) is False
                 and response_code == 403)
 
     @allure.title('Создание пользователя без заполнения поля "name"')
     @allure.description('Поле "name" не заполнено')
     def test__create_user_without_name(self):
         user_data, response_text, response_code = register_new_user_and_return_userdata_and_response(custom_name='')
-        assert (response_text['success'] is False
-                and response_text['message'] == 'Email, password and name are required fields'
+
+        assert (response_body_create_login_user_check(response_text, message=ERROR_NO_REQUIRED_FIELDS) is False
                 and response_code == 403)
